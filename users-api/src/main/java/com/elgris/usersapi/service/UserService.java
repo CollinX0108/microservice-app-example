@@ -1,4 +1,4 @@
-package com.example.users.service;
+package com.elgris.usersapi.service;
 
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;

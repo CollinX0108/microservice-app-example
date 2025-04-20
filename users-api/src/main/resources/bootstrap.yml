@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: users-api
+  cloud:
+    config:
+      enabled: false 

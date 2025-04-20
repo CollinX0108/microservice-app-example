@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS users (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(255) NOT NULL UNIQUE,
+    firstname VARCHAR(255),
+    lastname VARCHAR(255),
+    role INT
+); 
