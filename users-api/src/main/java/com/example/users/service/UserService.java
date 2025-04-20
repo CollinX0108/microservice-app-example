@@ -1,5 +1,7 @@
 package com.example.users.service;
 
+import io.github.resilience4j.circuitbreaker.CircuitBreaker;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.stereotype.Service;
@@ -17,17 +19,24 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
     
+    @Autowired
+    private CircuitBreakerRegistry circuitBreakerRegistry;
+    
     @Retryable(
         value = { Exception.class },
         maxAttempts = 3,
         backoff = @Backoff(delay = 2000)
     )
     public User getUser(String username) {
-        return findUserByUsername(username);
+        CircuitBreaker circuitBreaker = circuitBreakerRegistry.circuitBreaker("userService");
+        return circuitBreaker.executeSupplier(() -> findUserByUsername(username));
     }
 
     public User getUserWithTemplate(String username) {
-        return retryTemplate.execute(context -> findUserByUsername(username));
+        CircuitBreaker circuitBreaker = circuitBreakerRegistry.circuitBreaker("userService");
+        return retryTemplate.execute(context -> 
+            circuitBreaker.executeSupplier(() -> findUserByUsername(username))
+        );
     }
 
     private User findUserByUsername(String username) {
