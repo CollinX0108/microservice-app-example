@@ -3,7 +3,7 @@ package handlers
 import (
     "net/http"
     "time"
-    "../pkg/middleware"
+    "auth-api/pkg/middleware"
 )
 
 var breaker = middleware.NewCircuitBreaker(5, 30*time.Second)
