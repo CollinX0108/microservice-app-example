@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  zipkin:
+    image: openzipkin/zipkin
+    ports:
+      - "9411:9411"
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+
+  users-api:
+    build: ./users-api
+    environment:
+      - JWT_SECRET=PRFT
+      - SERVER_PORT=8083
+      - SPRING_ZIPKIN_BASEURL=http://zipkin:9411
+    ports:
+      - "8083:8083"
+    depends_on:
+      - zipkin
+      - redis
+
+  auth-api:
+    build: ./auth-api
+    environment:
+      - JWT_SECRET=PRFT
+      - AUTH_API_PORT=8000
+      - USERS_API_ADDRESS=http://users-api:8083
+    ports:
+      - "8000:8000"
+    depends_on:
+      - users-api
+
+  todos-api:
+    build: ./todos-api
+    environment:
+      - JWT_SECRET=PRFT
+      - TODO_API_PORT=8082
+    ports:
+      - "8082:8082"
+    depends_on:
+      - auth-api
+
+  log-processor:
+    build: ./log-message-processor
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_CHANNEL=log_channel
+      - ZIPKIN_URL=http://zipkin:9411/api/v2/spans
+    depends_on:
+      - redis
+      - zipkin
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - auth-api
+      - todos-api
