@@ -1,7 +1,7 @@
 trigger:
   branches:
     include:
-      - main
+      - master
   paths:
     include:
       - infra/*
@@ -23,6 +23,7 @@ steps:
     
 - task: Kubernetes@1
   inputs:
+    connectionType: 'Kubernetes Service Connection'
+    kubernetesServiceEndpoint: 'aks-microservices-connection'
     command: 'get'
-    arguments: 'pods,services,ingress -n microservices'
-    kubernetesServiceConnection: 'aks-microservices-connection' 
+    arguments: 'pods,services,ingress -n microservices' 
