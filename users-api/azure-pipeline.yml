@@ -51,29 +51,24 @@ stages:
       inputs:
         connectionType: 'Kubernetes Service Connection'
         kubernetesServiceEndpoint: 'aks-microservices-connection'
-        command: 'apply'
-        arguments: '-f users-api/k8s/namespace.yml'
-        
-    - task: KubernetesManifest@0
-      displayName: Deploy Application
-      inputs:
-        action: 'deploy'
-        kubernetesServiceConnection: 'aks-microservices-connection'
-        namespace: 'microservices'
-        manifests: |
-          users-api/k8s/deployment.yml
-        containers: |
-          $(containerRegistry)/$(imageRepository):$(tag)
-        imagePullSecrets: |
-          acr-microservices-secret
+        command: 'create'
+        arguments: 'namespace microservices --dry-run=client -o yaml | kubectl apply -f -'
 
     - task: Kubernetes@1
-      displayName: Verify Deployment
+      displayName: Deploy Application
       inputs:
         connectionType: 'Kubernetes Service Connection'
         kubernetesServiceEndpoint: 'aks-microservices-connection'
-        command: 'get'
-        arguments: 'deployment users-api -n microservices -o wide'
+        command: 'apply'
+        arguments: '-f users-api/k8s/deployment.yml'
+
+    - task: Kubernetes@1
+      displayName: Update Image
+      inputs:
+        connectionType: 'Kubernetes Service Connection'
+        kubernetesServiceEndpoint: 'aks-microservices-connection'
+        command: 'set'
+        arguments: 'image deployment/users-api users-api=$(containerRegistry)/$(imageRepository):$(tag) -n microservices'
 
     - task: Kubernetes@1
       displayName: Get Pod Status
