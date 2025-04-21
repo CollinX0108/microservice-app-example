@@ -1,49 +1,80 @@
-name: Todos API Pipeline
+trigger:
+  branches:
+    include:
+      - master
+  paths:
+    include:
+      - todos-api/*
 
-on:
-  push:
-    paths:
-      - 'todos-api/**'
-    branches:
-      - main
-  pull_request:
-    paths:
-      - 'todos-api/**'
+pool:
+  vmImage: 'ubuntu-latest'
 
-jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
+variables:
+  imageRepository: 'todos-api'
+  containerRegistry: 'microservicesacr2025.azurecr.io'
+  tag: '$(Build.BuildId)'
+
+stages:
+- stage: Build
+  displayName: Build and Push
+  jobs:
+  - job: Build
     steps:
-      - uses: actions/checkout@v3
+    - task: Docker@2
+      displayName: Build and Push Image
+      inputs:
+        containerRegistry: 'acr-microservices-connection'
+        repository: '$(imageRepository)'
+        command: 'buildAndPush'
+        Dockerfile: 'todos-api/Dockerfile'
+        tags: |
+          $(tag)
+          latest
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+- stage: Deploy
+  displayName: Deploy to AKS
+  dependsOn: Build
+  condition: succeeded()
+  jobs:
+  - job: Deploy
+    steps:
+    - task: Kubernetes@1
+      displayName: Check Cluster Status
+      inputs:
+        connectionType: 'Kubernetes Service Connection'
+        kubernetesServiceEndpoint: 'aks-microservices-connection'
+        command: 'get'
+        arguments: 'nodes'
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+    - task: Kubernetes@1
+      displayName: Deploy Application
+      inputs:
+        connectionType: 'Kubernetes Service Connection'
+        kubernetesServiceEndpoint: 'aks-microservices-connection'
+        command: 'apply'
+        arguments: '-f todos-api/k8s/deployment.yml'
 
-      - name: Build and push
-        uses: docker/build-push-action@v4
-        with:
-          context: ./todos-api
-          push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/todos-api:latest
+    - task: Kubernetes@1
+      displayName: Update Image
+      inputs:
+        connectionType: 'Kubernetes Service Connection'
+        kubernetesServiceEndpoint: 'aks-microservices-connection'
+        command: 'set'
+        arguments: 'image deployment/todos-api todos-api=$(containerRegistry)/$(imageRepository):$(tag) -n microservices'
 
-      - name: Set up kubectl
-        uses: azure/setup-kubectl@v3
-        
-      - name: Configure kubectl
-        run: |
-          echo "${{ secrets.KUBE_CONFIG }}" > kubeconfig.yaml
-          export KUBECONFIG=./kubeconfig.yaml
+    - task: Kubernetes@1
+      displayName: Get Pod Status
+      inputs:
+        connectionType: 'Kubernetes Service Connection'
+        kubernetesServiceEndpoint: 'aks-microservices-connection'
+        command: 'get'
+        arguments: 'pods -n microservices -l app=todos-api -o wide'
 
-      - name: Deploy Application
-        run: kubectl apply -f todos-api/k8s/deployment.yml
-
-      - name: Verify Deployment
-        run: |
-          kubectl get pods -n microservices -l app=todos-api
-          kubectl get services -n microservices -l app=todos-api 
+    - task: Kubernetes@1
+      displayName: Get Pod Logs
+      condition: succeededOrFailed()
+      inputs:
+        connectionType: 'Kubernetes Service Connection'
+        kubernetesServiceEndpoint: 'aks-microservices-connection'
+        command: 'logs'
+        arguments: '-l app=todos-api -n microservices --tail=100' 
