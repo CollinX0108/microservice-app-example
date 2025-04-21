@@ -47,12 +47,17 @@ stages:
         arguments: 'nodes'
 
     - task: Kubernetes@1
-      displayName: Create/Verify Namespace
+      displayName: Create Namespace
       inputs:
         connectionType: 'Kubernetes Service Connection'
         kubernetesServiceEndpoint: 'aks-microservices-connection'
-        command: 'create'
-        arguments: 'namespace microservices --dry-run=client -o yaml | kubectl apply -f -'
+        command: 'apply'
+        useConfigurationFile: true
+        inline: |
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: microservices
 
     - task: Kubernetes@1
       displayName: Deploy Application
