@@ -1,0 +1,28 @@
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - infra/*
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- task: KubernetesManifest@0
+  inputs:
+    action: 'deploy'
+    kubernetesServiceConnection: 'aks-microservices-connection'
+    namespace: 'microservices'
+    manifests: |
+      infra/k8s/namespace.yml
+      infra/k8s/redis.yml
+      infra/k8s/zipkin.yml
+      infra/k8s/ingress.yml
+    
+- task: Kubernetes@1
+  inputs:
+    command: 'get'
+    arguments: 'pods,services,ingress -n microservices'
+    kubernetesServiceConnection: 'aks-microservices-connection' 
