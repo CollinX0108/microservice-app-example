@@ -20,9 +20,9 @@ spec:
         - containerPort: 80
         env:
         - name: AUTH_API_ADDRESS
-          value: "http://auth-api:8080"
+          value: "/auth"
         - name: TODOS_API_ADDRESS
-          value: "http://todos-api:8080"
+          value: "/todos"
         resources:
           limits:
             memory: "128Mi"
