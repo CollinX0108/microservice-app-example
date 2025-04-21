@@ -21,6 +21,7 @@ stages:
   - job: Build
     steps:
     - task: Docker@2
+      displayName: Build and Push Image
       inputs:
         containerRegistry: 'acr-microservices-connection'
         repository: '$(imageRepository)'
@@ -38,22 +39,52 @@ stages:
   - job: Deploy
     steps:
     - task: Kubernetes@1
+      displayName: Check Cluster Status
       inputs:
         connectionType: 'Kubernetes Service Connection'
         kubernetesServiceEndpoint: 'aks-microservices-connection'
         command: 'get'
-        arguments: 'pods -n microservices'
-        
-    - task: KubernetesManifest@0
-      inputs:
-        action: 'deploy'
-        kubernetesServiceEndpoint: 'aks-microservices-connection'
-        namespace: 'microservices'
-        manifests: 'users-api/k8s/deployment.yml'
-        containers: '$(containerRegistry)/$(imageRepository):$(tag)'
-        rolloutStatusTimeout: '300'
+        arguments: 'nodes'
 
     - task: Kubernetes@1
+      displayName: Create/Verify Namespace
+      inputs:
+        connectionType: 'Kubernetes Service Connection'
+        kubernetesServiceEndpoint: 'aks-microservices-connection'
+        command: 'apply'
+        arguments: '-f users-api/k8s/namespace.yml'
+        
+    - task: KubernetesManifest@0
+      displayName: Deploy Application
+      inputs:
+        action: 'deploy'
+        kubernetesServiceConnection: 'aks-microservices-connection'
+        namespace: 'microservices'
+        manifests: |
+          users-api/k8s/deployment.yml
+        containers: |
+          $(containerRegistry)/$(imageRepository):$(tag)
+        imagePullSecrets: |
+          acr-microservices-secret
+
+    - task: Kubernetes@1
+      displayName: Verify Deployment
+      inputs:
+        connectionType: 'Kubernetes Service Connection'
+        kubernetesServiceEndpoint: 'aks-microservices-connection'
+        command: 'get'
+        arguments: 'deployment users-api -n microservices -o wide'
+
+    - task: Kubernetes@1
+      displayName: Get Pod Status
+      inputs:
+        connectionType: 'Kubernetes Service Connection'
+        kubernetesServiceEndpoint: 'aks-microservices-connection'
+        command: 'get'
+        arguments: 'pods -n microservices -l app=users-api -o wide'
+
+    - task: Kubernetes@1
+      displayName: Get Pod Logs
       condition: succeededOrFailed()
       inputs:
         connectionType: 'Kubernetes Service Connection'
