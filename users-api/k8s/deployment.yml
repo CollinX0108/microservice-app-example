@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: users-api
+  namespace: microservices
+spec:
+  selector:
+    matchLabels:
+      app: users-api
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: users-api
+    spec:
+      containers:
+      - name: users-api
+        image: elgris/microservice-app-example-users-api:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: ZIPKIN_URL
+          value: "http://zipkin:9411/api/v2/spans"
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "200m" 

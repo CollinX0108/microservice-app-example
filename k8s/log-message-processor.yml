@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: log-message-processor
+  namespace: microservices
+spec:
+  selector:
+    matchLabels:
+      app: log-message-processor
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: log-message-processor
+    spec:
+      containers:
+      - name: log-message-processor
+        image: elgris/microservice-app-example-log-message-processor:latest
+        env:
+        - name: REDIS_CONNECTION_STRING
+          value: "redis:6379"
+        - name: ZIPKIN_URL
+          value: "http://zipkin:9411/api/v2/spans"
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: log-message-processor
+  namespace: microservices
+spec:
+  selector:
+    app: log-message-processor
+  ports:
+  - port: 8080
+    targetPort: 8080
+  type: ClusterIP 

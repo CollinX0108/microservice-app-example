@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-api
+  namespace: microservices
+spec:
+  selector:
+    matchLabels:
+      app: auth-api
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: auth-api
+    spec:
+      containers:
+      - name: auth-api
+        image: elgris/auth-api:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: REDIS_CONNECTION_STRING
+          value: "redis:6379"
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-api
+  namespace: microservices
+spec:
+  selector:
+    app: auth-api
+  ports:
+  - port: 8080
+    targetPort: 8080
+  type: ClusterIP 
