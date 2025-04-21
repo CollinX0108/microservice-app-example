@@ -1,21 +1,24 @@
 import Vue from 'vue'
-
 import Auth from '@/auth'
 import Router from 'vue-router'
+import Login from '@/components/Login.vue'
+import Todos from '@/components/Todos.vue'
+
 Vue.use(Router)
 
 export default new Router({
+  mode: 'history',
   routes: [
     {
       path: '/login',
       name: 'login',
-      component: require('@/components/Login.vue')
+      component: Login
     },
     {
       path: '/',
       alias: '/todos',
       name: 'todos',
-      component: require('@/components/Todos.vue'),
+      component: Todos,
       beforeEnter: requireLoggedIn
     }
   ]

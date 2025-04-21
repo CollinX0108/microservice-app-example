@@ -16,7 +16,7 @@ services:
     environment:
       - JWT_SECRET=PRFT
       - SERVER_PORT=8083
-      - SPRING_ZIPKIN_BASEURL=http://zipkin:9411
+      - SPRING_ZIPKIN_BASEURL=http://zipkin:9411/api/v2/spans
     ports:
       - "8083:8083"
     depends_on:
@@ -57,8 +57,12 @@ services:
 
   frontend:
     build: ./frontend
+    environment:
+      - NODE_ENV=production
+      - ZIPKIN_URL=http://zipkin:9411/api/v2/spans
     ports:
       - "8080:80"
     depends_on:
       - auth-api
       - todos-api
+      - zipkin

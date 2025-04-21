@@ -4,30 +4,35 @@ import Vue from 'vue'
 import BootstrapVue from 'bootstrap-vue/dist/bootstrap-vue.esm'
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
-Vue.use(BootstrapVue)
-
 import VueResource from 'vue-resource'
-Vue.use(VueResource)
-
 import App from '@/components/App'
 import router from './router'
 import store from './store'
+import Auth from './auth'
+import Zipkin from './zipkin'
+
+// Configuración básica
+Vue.use(BootstrapVue)
+Vue.use(VueResource)
+Vue.use(Auth)
+Vue.use(Zipkin)
 
 Vue.config.productionTip = false
+Vue.config.devtools = true
 
-/* Auth plugin */
-import Auth from './auth'
-Vue.use(Auth)
+// Agregar manejo de errores global
+Vue.config.errorHandler = function (err, vm, info) {
+  console.error('Error:', err)
+  console.error('Info:', info)
+}
 
-/* Auth plugin */
-import Zipkin from './zipkin'
-Vue.use(Zipkin)
+// Agregar logs de inicialización
+console.log('Inicializando Vue...')
 
 /* eslint-disable no-new */
 new Vue({
   el: '#app',
   router,
   store,
-  template: '<App/>',
-  components: { App }
+  render: h => h(App)
 })

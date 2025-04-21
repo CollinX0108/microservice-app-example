@@ -15,4 +15,3 @@ export const CLEAR_ALL_DATA = (state) => {
   state.user.name = ''
   state.user.role = null
 }
-
