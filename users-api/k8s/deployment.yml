@@ -15,7 +15,8 @@ spec:
     spec:
       containers:
       - name: users-api
-        image: elgris/microservice-app-example-users-api:latest
+        image: users-api:latest
+        imagePullPolicy: Never
         ports:
         - containerPort: 8080
         env:

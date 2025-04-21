@@ -1,0 +1,49 @@
+name: Log Message Processor Pipeline
+
+on:
+  push:
+    paths:
+      - 'log-message-processor/**'
+    branches:
+      - main
+  pull_request:
+    paths:
+      - 'log-message-processor/**'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v4
+        with:
+          context: ./log-message-processor
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/log-message-processor:latest
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        
+      - name: Configure kubectl
+        run: |
+          echo "${{ secrets.KUBE_CONFIG }}" > kubeconfig.yaml
+          export KUBECONFIG=./kubeconfig.yaml
+
+      - name: Deploy Application
+        run: kubectl apply -f log-message-processor/k8s/deployment.yml
+
+      - name: Verify Deployment
+        run: |
+          kubectl get pods -n microservices -l app=log-message-processor
+          kubectl get services -n microservices -l app=log-message-processor 

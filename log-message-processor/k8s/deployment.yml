@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: log-message-processor
+  namespace: microservices
+spec:
+  selector:
+    matchLabels:
+      app: log-message-processor
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: log-message-processor
+    spec:
+      containers:
+      - name: log-message-processor
+        image: log-message-processor:latest
+        imagePullPolicy: Never
+        env:
+        - name: REDIS_HOST
+          value: "redis"
+        - name: REDIS_PORT
+          value: "6379"
+        - name: REDIS_CHANNEL
+          value: "log-messages"
+        - name: ZIPKIN_URL
+          value: "http://zipkin:9411/api/v2/spans"
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "100m" 

@@ -15,10 +15,13 @@ spec:
     spec:
       containers:
       - name: auth-api
-        image: elgris/auth-api:latest
+        image: auth-api:latest
+        imagePullPolicy: Never
         ports:
         - containerPort: 8080
         env:
+        - name: AUTH_API_PORT
+          value: "8080"
         - name: REDIS_CONNECTION_STRING
           value: "redis:6379"
         resources:
