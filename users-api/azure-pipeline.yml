@@ -35,17 +35,12 @@ stages:
   dependsOn: Build
   condition: succeeded()
   jobs:
-  - deployment: Deploy
-    displayName: Deploy to AKS
-    environment: 'production'
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-          - task: KubernetesManifest@0
-            inputs:
-              action: 'deploy'
-              kubernetesServiceConnection: 'aks-microservices-connection'
-              namespace: 'microservices'
-              manifests: 'users-api/k8s/deployment.yml'
-              containers: '$(containerRegistry)/$(imageRepository):$(tag)' 
+  - job: Deploy
+    steps:
+    - task: KubernetesManifest@0
+      inputs:
+        action: 'deploy'
+        kubernetesServiceConnection: 'aks-microservices-connection'
+        namespace: 'microservices'
+        manifests: 'users-api/k8s/deployment.yml'
+        containers: '$(containerRegistry)/$(imageRepository):$(tag)'
