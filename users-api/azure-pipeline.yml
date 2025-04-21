@@ -37,6 +37,13 @@ stages:
   jobs:
   - job: Deploy
     steps:
+    - task: Kubernetes@1
+      inputs:
+        connectionType: 'Kubernetes Service Connection'
+        kubernetesServiceEndpoint: 'aks-microservices-connection'
+        command: 'get'
+        arguments: 'pods -n microservices'
+        
     - task: KubernetesManifest@0
       inputs:
         action: 'deploy'
@@ -44,3 +51,12 @@ stages:
         namespace: 'microservices'
         manifests: 'users-api/k8s/deployment.yml'
         containers: '$(containerRegistry)/$(imageRepository):$(tag)'
+        rolloutStatusTimeout: '300'
+
+    - task: Kubernetes@1
+      condition: succeededOrFailed()
+      inputs:
+        connectionType: 'Kubernetes Service Connection'
+        kubernetesServiceEndpoint: 'aks-microservices-connection'
+        command: 'logs'
+        arguments: '-l app=users-api -n microservices --tail=100'
