@@ -47,7 +47,7 @@ stages:
     - task: KubernetesManifest@0
       inputs:
         action: 'deploy'
-        kubernetesServiceConnection: 'aks-microservices-connection'
+        kubernetesServiceEndpoint: 'aks-microservices-connection'
         namespace: 'microservices'
         manifests: 'users-api/k8s/deployment.yml'
         containers: '$(containerRegistry)/$(imageRepository):$(tag)'
