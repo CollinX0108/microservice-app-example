@@ -15,8 +15,7 @@ spec:
     spec:
       containers:
       - name: log-message-processor
-        image: log-message-processor:latest
-        imagePullPolicy: Never
+        image: microservicesacr2025.azurecr.io/log-message-processor:latest
         env:
         - name: REDIS_HOST
           value: "redis"

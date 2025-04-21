@@ -15,8 +15,7 @@ spec:
     spec:
       containers:
       - name: auth-api
-        image: auth-api:latest
-        imagePullPolicy: Never
+        image: microservicesacr2025.azurecr.io/auth-api:latest
         ports:
         - containerPort: 8080
         env:

@@ -15,8 +15,7 @@ spec:
     spec:
       containers:
       - name: users-api
-        image: users-api:latest
-        imagePullPolicy: Never
+        image: microservicesacr2025.azurecr.io/users-api:latest
         ports:
         - containerPort: 8080
         env:
@@ -25,4 +24,19 @@ spec:
         resources:
           limits:
             memory: "256Mi"
-            cpu: "200m" 
+            cpu: "200m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: users-api
+  namespace: microservices
+  labels:
+    app: users-api
+spec:
+  selector:
+    app: users-api
+  ports:
+  - port: 8080
+    targetPort: 8080
+  type: ClusterIP 

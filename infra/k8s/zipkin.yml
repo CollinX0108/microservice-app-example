@@ -19,9 +19,12 @@ spec:
         ports:
         - containerPort: 9411
         resources:
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
           limits:
+            cpu: "200m"
             memory: "512Mi"
-            cpu: "300m"
 ---
 apiVersion: v1
 kind: Service
