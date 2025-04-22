@@ -11,6 +11,14 @@ steps:
     command: 'get'
     arguments: 'pods -n microservices'
 
+# Escalar cada deployment a 0 réplicas
+- task: Kubernetes@1
+  inputs:
+    connectionType: 'Kubernetes Service Connection'
+    kubernetesServiceEndpoint: 'aks-microservices-connection'
+    command: 'scale'
+    arguments: 'deployment -n microservices frontend auth-api todos-api users-api log-message-processor zipkin redis --replicas=0'
+
 - task: Bash@3
   inputs:
     targetType: 'inline'

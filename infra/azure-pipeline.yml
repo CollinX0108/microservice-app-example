@@ -28,6 +28,14 @@ steps:
     command: 'get'
     arguments: 'pods,services,ingress -n microservices'
 
+# Escalar cada deployment a 1 réplica
+- task: Kubernetes@1
+  inputs:
+    connectionType: 'Kubernetes Service Connection'
+    kubernetesServiceEndpoint: 'aks-microservices-connection'
+    command: 'scale'
+    arguments: 'deployment -n microservices frontend auth-api todos-api users-api log-message-processor zipkin redis --replicas=1'
+
 - task: Bash@3
   inputs:
     targetType: 'inline'
