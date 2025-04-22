@@ -28,15 +28,10 @@ steps:
     command: 'get'
     arguments: 'pods,services,ingress -n microservices'
 
-- task: AzureCLI@2
+- task: Bash@3
   inputs:
-    azureSubscription: 'Azure subscription 1'
-    scriptType: 'bash'
-    scriptLocation: 'inlineScript'
-    inlineScript: |
-      # Obtener credenciales del cluster
-      az aks get-credentials --resource-group microservices-rg --name microservices-aks --overwrite-existing
-      
-      # Ejecutar el script de inicio
+    targetType: 'inline'
+    script: |
+      # Ejecutar el script de inicio usando kubectl desde la conexión de Kubernetes
       chmod +x $(System.DefaultWorkingDirectory)/infra/start-services.sh
-      $(System.DefaultWorkingDirectory)/infra/start-services.sh 
+      KUBECONFIG=$(echo ~)/.kube/config $(System.DefaultWorkingDirectory)/infra/start-services.sh 

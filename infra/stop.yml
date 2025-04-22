@@ -4,19 +4,6 @@ pool:
   vmImage: 'ubuntu-latest'
 
 steps:
-- task: AzureCLI@2
-  inputs:
-    azureSubscription: 'Azure subscription 1'
-    scriptType: 'bash'
-    scriptLocation: 'inlineScript'
-    inlineScript: |
-      # Obtener credenciales del cluster
-      az aks get-credentials --resource-group microservices-rg --name microservices-aks --overwrite-existing
-      
-      # Ejecutar el script de parada
-      chmod +x $(System.DefaultWorkingDirectory)/infra/stop-services.sh
-      $(System.DefaultWorkingDirectory)/infra/stop-services.sh
-
 - task: Kubernetes@1
   inputs:
     connectionType: 'Kubernetes Service Connection'
@@ -26,5 +13,8 @@ steps:
 
 - task: Bash@3
   inputs:
-    filePath: '$(System.DefaultWorkingDirectory)/infra/stop-services.sh'
-    failOnStderr: false 
+    targetType: 'inline'
+    script: |
+      # Ejecutar el script de parada usando kubectl desde la conexión de Kubernetes
+      chmod +x $(System.DefaultWorkingDirectory)/infra/stop-services.sh
+      KUBECONFIG=$(echo ~)/.kube/config $(System.DefaultWorkingDirectory)/infra/stop-services.sh 
