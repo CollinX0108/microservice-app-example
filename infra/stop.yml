@@ -17,12 +17,4 @@ steps:
     connectionType: 'Kubernetes Service Connection'
     kubernetesServiceEndpoint: 'aks-microservices-connection'
     command: 'scale'
-    arguments: 'deployment -n microservices frontend auth-api todos-api users-api log-message-processor zipkin redis --replicas=0'
-
-- task: Bash@3
-  inputs:
-    targetType: 'inline'
-    script: |
-      # Ejecutar el script de parada usando kubectl desde la conexión de Kubernetes
-      chmod +x $(System.DefaultWorkingDirectory)/infra/stop-services.sh
-      KUBECONFIG=$(echo ~)/.kube/config $(System.DefaultWorkingDirectory)/infra/stop-services.sh 
+    arguments: 'deployment -n microservices frontend auth-api todos-api users-api log-message-processor zipkin redis --replicas=0' 

@@ -1,8 +1,8 @@
 trigger:
-  branches:
+    branches:
     include:
       - master
-  paths:
+    paths:
     include:
       - log-message-processor/*
 
@@ -17,7 +17,7 @@ variables:
 stages:
 - stage: Build
   displayName: Build and Push
-  jobs:
+jobs:
   - job: Build
     steps:
     - task: Docker@2
