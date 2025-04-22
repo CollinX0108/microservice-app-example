@@ -1,0 +1,17 @@
+trigger: none # Manual trigger only
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- task: Kubernetes@1
+  inputs:
+    connectionType: 'Kubernetes Service Connection'
+    kubernetesServiceEndpoint: 'aks-microservices-connection'
+    command: 'get'
+    arguments: 'pods -n microservices'
+
+- task: Bash@3
+  inputs:
+    filePath: '$(System.DefaultWorkingDirectory)/infra/stop-services.sh'
+    failOnStderr: false 

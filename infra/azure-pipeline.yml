@@ -26,4 +26,9 @@ steps:
     connectionType: 'Kubernetes Service Connection'
     kubernetesServiceEndpoint: 'aks-microservices-connection'
     command: 'get'
-    arguments: 'pods,services,ingress -n microservices' 
+    arguments: 'pods,services,ingress -n microservices'
+
+- task: Bash@3
+  inputs:
+    filePath: '$(System.DefaultWorkingDirectory)/infra/start-services.sh'
+    failOnStderr: false 
