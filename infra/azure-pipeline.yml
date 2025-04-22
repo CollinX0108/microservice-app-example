@@ -28,7 +28,15 @@ steps:
     command: 'get'
     arguments: 'pods,services,ingress -n microservices'
 
-- task: Bash@3
+- task: AzureCLI@2
   inputs:
-    filePath: '$(System.DefaultWorkingDirectory)/infra/start-services.sh'
-    failOnStderr: false 
+    azureSubscription: 'Azure subscription 1'
+    scriptType: 'bash'
+    scriptLocation: 'inlineScript'
+    inlineScript: |
+      # Obtener credenciales del cluster
+      az aks get-credentials --resource-group microservices-rg --name microservices-aks --overwrite-existing
+      
+      # Ejecutar el script de inicio
+      chmod +x $(System.DefaultWorkingDirectory)/infra/start-services.sh
+      $(System.DefaultWorkingDirectory)/infra/start-services.sh 
