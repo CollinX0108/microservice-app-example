@@ -62,19 +62,3 @@ stages:
             command: 'set'
             arguments: 'image deployment/log-message-processor log-message-processor=$(containerRegistry)/$(imageRepository):$(tag) -n microservices'
 
-        - task: Kubernetes@1
-          displayName: Get Pod Status
-          inputs:
-            connectionType: 'Kubernetes Service Connection'
-            kubernetesServiceEndpoint: 'aks-microservices-connection'
-            command: 'get'
-            arguments: 'pods -n microservices -l app=log-message-processor -o wide'
-
-        - task: Kubernetes@1
-          displayName: Get Pod Logs
-          condition: succeededOrFailed()
-          inputs:
-            connectionType: 'Kubernetes Service Connection'
-            kubernetesServiceEndpoint: 'aks-microservices-connection'
-            command: 'logs'
-            arguments: '-l app=log-message-processor -n microservices --tail=100'
