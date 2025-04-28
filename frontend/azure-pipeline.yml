@@ -1,8 +1,8 @@
 trigger:
-    branches:
+  branches:
     include:
       - master
-    paths:
+  paths:
     include:
       - frontend/*
 
@@ -17,72 +17,72 @@ variables:
 stages:
 - stage: Build
   displayName: Build and Push
-jobs:
-  - job: Build
-    steps:
-    - task: Docker@2
-      displayName: Build and Push Image
-      inputs:
-        containerRegistry: 'acr-microservices-connection'
-        repository: '$(imageRepository)'
-        command: 'buildAndPush'
-        Dockerfile: 'frontend/Dockerfile'
-        tags: |
-          $(tag)
-          latest
+  jobs:
+    - job: Build
+      steps:
+        - task: Docker@2
+          displayName: Build and Push Image
+          inputs:
+            containerRegistry: 'acr-microservices-connection'
+            repository: '$(imageRepository)'
+            command: 'buildAndPush'
+            Dockerfile: 'frontend/Dockerfile'
+            tags: |
+              $(tag)
+              latest
 
 - stage: Deploy
   displayName: Deploy to AKS
   dependsOn: Build
   condition: succeeded()
   jobs:
-  - job: Deploy
-    steps:
-    - task: Kubernetes@1
-      displayName: Check Cluster Status
-      inputs:
-        connectionType: 'Kubernetes Service Connection'
-        kubernetesServiceEndpoint: 'aks-microservices-connection'
-        command: 'get'
-        arguments: 'nodes'
+    - job: Deploy
+      steps:
+        - task: Kubernetes@1
+          displayName: Check Cluster Status
+          inputs:
+            connectionType: 'Kubernetes Service Connection'
+            kubernetesServiceEndpoint: 'aks-microservices-connection'
+            command: 'get'
+            arguments: 'nodes'
 
-    - task: Kubernetes@1
-      displayName: Deploy Application
-      inputs:
-        connectionType: 'Kubernetes Service Connection'
-        kubernetesServiceEndpoint: 'aks-microservices-connection'
-        command: 'apply'
-        arguments: '-f frontend/k8s/deployment.yml'
+        - task: Kubernetes@1
+          displayName: Deploy Application
+          inputs:
+            connectionType: 'Kubernetes Service Connection'
+            kubernetesServiceEndpoint: 'aks-microservices-connection'
+            command: 'apply'
+            arguments: '-f frontend/k8s/deployment.yml'
 
-    - task: Kubernetes@1
-      displayName: Update Image
-      inputs:
-        connectionType: 'Kubernetes Service Connection'
-        kubernetesServiceEndpoint: 'aks-microservices-connection'
-        command: 'set'
-        arguments: 'image deployment/frontend frontend=$(containerRegistry)/$(imageRepository):$(tag) -n microservices'
+        - task: Kubernetes@1
+          displayName: Update Image
+          inputs:
+            connectionType: 'Kubernetes Service Connection'
+            kubernetesServiceEndpoint: 'aks-microservices-connection'
+            command: 'set'
+            arguments: 'image deployment/frontend frontend=$(containerRegistry)/$(imageRepository):$(tag) -n microservices'
 
-    - task: Kubernetes@1
-      displayName: Get Pod Status
-      inputs:
-        connectionType: 'Kubernetes Service Connection'
-        kubernetesServiceEndpoint: 'aks-microservices-connection'
-        command: 'get'
-        arguments: 'pods -n microservices -l app=frontend -o wide'
+        - task: Kubernetes@1
+          displayName: Get Pod Status
+          inputs:
+            connectionType: 'Kubernetes Service Connection'
+            kubernetesServiceEndpoint: 'aks-microservices-connection'
+            command: 'get'
+            arguments: 'pods -n microservices -l app=frontend -o wide'
 
-    - task: Kubernetes@1
-      displayName: Get Service Status
-      inputs:
-        connectionType: 'Kubernetes Service Connection'
-        kubernetesServiceEndpoint: 'aks-microservices-connection'
-        command: 'get'
-        arguments: 'service frontend -n microservices'
+        - task: Kubernetes@1
+          displayName: Get Service Status
+          inputs:
+            connectionType: 'Kubernetes Service Connection'
+            kubernetesServiceEndpoint: 'aks-microservices-connection'
+            command: 'get'
+            arguments: 'service frontend -n microservices'
 
-    - task: Kubernetes@1
-      displayName: Get Pod Logs
-      condition: succeededOrFailed()
-      inputs:
-        connectionType: 'Kubernetes Service Connection'
-        kubernetesServiceEndpoint: 'aks-microservices-connection'
-        command: 'logs'
-        arguments: '-l app=frontend -n microservices --tail=100' 
+        - task: Kubernetes@1
+          displayName: Get Pod Logs
+          condition: succeededOrFailed()
+          inputs:
+            connectionType: 'Kubernetes Service Connection'
+            kubernetesServiceEndpoint: 'aks-microservices-connection'
+            command: 'logs'
+            arguments: '-l app=frontend -n microservices --tail=100'
