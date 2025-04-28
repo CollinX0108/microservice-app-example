@@ -14,15 +14,6 @@
         </div>
       </div>
 
-      <div class='row'>
-        <div class='col-sm-12'>
-          <div class='form-control-feedback'>
-            <span class='text-danger align-middle'>
-            {{ errorMessage }}
-            </span>
-          </div>
-        </div>
-      </div>
 
       <div class="row">
         <div class="col-sm-10">
