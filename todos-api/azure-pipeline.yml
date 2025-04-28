@@ -1,8 +1,8 @@
 trigger:
-    branches:
+  branches:
     include:
       - master
-    paths:
+  paths:
     include:
       - todos-api/*
 
@@ -17,64 +17,64 @@ variables:
 stages:
 - stage: Build
   displayName: Build and Push
-jobs:
-  - job: Build
-    steps:
-    - task: Docker@2
-      displayName: Build and Push Image
-      inputs:
-        containerRegistry: 'acr-microservices-connection'
-        repository: '$(imageRepository)'
-        command: 'buildAndPush'
-        Dockerfile: 'todos-api/Dockerfile'
-        tags: |
-          $(tag)
-          latest
+  jobs:  # Aquí se anida "jobs" bajo "stage"
+    - job: Build
+      steps:
+        - task: Docker@2
+          displayName: Build and Push Image
+          inputs:
+            containerRegistry: 'acr-microservices-connection'
+            repository: '$(imageRepository)'
+            command: 'buildAndPush'
+            Dockerfile: 'todos-api/Dockerfile'
+            tags: |
+              $(tag)
+              latest
 
 - stage: Deploy
   displayName: Deploy to AKS
   dependsOn: Build
   condition: succeeded()
-  jobs:
-  - job: Deploy
-    steps:
-    - task: Kubernetes@1
-      displayName: Check Cluster Status
-      inputs:
-        connectionType: 'Kubernetes Service Connection'
-        kubernetesServiceEndpoint: 'aks-microservices-connection'
-        command: 'get'
-        arguments: 'nodes'
+  jobs:  # También se anidan los jobs bajo el stage "Deploy"
+    - job: Deploy
+      steps:
+        - task: Kubernetes@1
+          displayName: Check Cluster Status
+          inputs:
+            connectionType: 'Kubernetes Service Connection'
+            kubernetesServiceEndpoint: 'aks-microservices-connection'
+            command: 'get'
+            arguments: 'nodes'
 
-    - task: Kubernetes@1
-      displayName: Deploy Application
-      inputs:
-        connectionType: 'Kubernetes Service Connection'
-        kubernetesServiceEndpoint: 'aks-microservices-connection'
-        command: 'apply'
-        arguments: '-f todos-api/k8s/deployment.yml'
+        - task: Kubernetes@1
+          displayName: Deploy Application
+          inputs:
+            connectionType: 'Kubernetes Service Connection'
+            kubernetesServiceEndpoint: 'aks-microservices-connection'
+            command: 'apply'
+            arguments: '-f todos-api/k8s/deployment.yml'
 
-    - task: Kubernetes@1
-      displayName: Update Image
-      inputs:
-        connectionType: 'Kubernetes Service Connection'
-        kubernetesServiceEndpoint: 'aks-microservices-connection'
-        command: 'set'
-        arguments: 'image deployment/todos-api todos-api=$(containerRegistry)/$(imageRepository):$(tag) -n microservices'
+        - task: Kubernetes@1
+          displayName: Update Image
+          inputs:
+            connectionType: 'Kubernetes Service Connection'
+            kubernetesServiceEndpoint: 'aks-microservices-connection'
+            command: 'set'
+            arguments: 'image deployment/todos-api todos-api=$(containerRegistry)/$(imageRepository):$(tag) -n microservices'
 
-    - task: Kubernetes@1
-      displayName: Get Pod Status
-      inputs:
-        connectionType: 'Kubernetes Service Connection'
-        kubernetesServiceEndpoint: 'aks-microservices-connection'
-        command: 'get'
-        arguments: 'pods -n microservices -l app=todos-api -o wide'
+        - task: Kubernetes@1
+          displayName: Get Pod Status
+          inputs:
+            connectionType: 'Kubernetes Service Connection'
+            kubernetesServiceEndpoint: 'aks-microservices-connection'
+            command: 'get'
+            arguments: 'pods -n microservices -l app=todos-api -o wide'
 
-    - task: Kubernetes@1
-      displayName: Get Pod Logs
-      condition: succeededOrFailed()
-      inputs:
-        connectionType: 'Kubernetes Service Connection'
-        kubernetesServiceEndpoint: 'aks-microservices-connection'
-        command: 'logs'
-        arguments: '-l app=todos-api -n microservices --tail=100' 
+        - task: Kubernetes@1
+          displayName: Get Pod Logs
+          condition: succeededOrFailed()
+          inputs:
+            connectionType: 'Kubernetes Service Connection'
+            kubernetesServiceEndpoint: 'aks-microservices-connection'
+            command: 'logs'
+            arguments: '-l app=todos-api -n microservices --tail=100'
