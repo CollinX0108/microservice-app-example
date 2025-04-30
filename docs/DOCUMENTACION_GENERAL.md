@@ -1,147 +1,150 @@
-# Documentación General del Proyecto Microservicios
+### Collin Gonzalez - A00382429
+### Manuel Herrera - A00381987
 
-## Índice
-1. [Introducción](#introducción)
-2. [Arquitectura](#arquitectura)
-3. [Patrones de Diseño Cloud](#patrones-de-diseño-cloud)
-4. [Estrategia de Branching](#estrategia-de-branching)
+# General Microservices Documentation
+
+## Table of Contents
+1. [Introduction](#introduction)
+2. [Architecture](#architecture)
+3. [Cloud Design Patterns](#cloud-design-patterns)
+4. [Branching Strategy](#branching-strategy)
 5. [Pipelines](#pipelines)
-6. [Infraestructura](#infraestructura)
-7. [Guía de Uso](#guía-de-uso)
+6. [Infrastructure](#infrastructure)
+7. [Usage Guide](#usage-guide)
 
-## Introducción
-Este proyecto implementa una aplicación de microservicios utilizando diferentes tecnologías y patrones de diseño cloud. La aplicación está compuesta por varios servicios que trabajan juntos para proporcionar una funcionalidad completa.
+## Introduction
+This project implements a microservices application using different technologies and cloud design patterns. The application is composed of several services that work together to provide complete functionality.
 
-## Arquitectura
-La arquitectura del proyecto se compone de los siguientes servicios:
+## Architecture
+The project architecture consists of the following services:
 
-- **Frontend**: Aplicación web construida con Vue.js
-- **Auth API**: Servicio de autenticación en Go
-- **Users API**: Servicio de gestión de usuarios en Java/Spring Boot
-- **TODOs API**: Servicio de gestión de tareas en Node.js
-- **Log Message Processor**: Procesador de mensajes en Python
-- **Redis**: Base de datos en memoria para mensajería
-- **Zipkin**: Sistema de trazabilidad distribuida
+- **Frontend**: Web application built with Vue.js
+- **Auth API**: Authentication service in Go
+- **Users API**: User management service in Java/Spring Boot
+- **TODOs API**: Task management service in Node.js
+- **Log Message Processor**: Message processor in Python
+- **Redis**: In-memory database for messaging
+- **Zipkin**: Distributed tracing system
 
-## Patrones de Diseño Cloud
+## Cloud Design Patterns
 
 ### Circuit Breaker
-Implementado en Auth API (Go) y TODOs API (Node.js):
-- Monitorea fallos en las llamadas entre servicios
-- "Abre el circuito" cuando detecta demasiados fallos
-- Evita fallos en cascada
-- Permite recuperación automática
+Implemented in Auth API (Go) and TODOs API (Node.js):
+- Monitors failures in inter-service calls
+- "Opens the circuit" when too many failures are detected
+- Prevents cascading failures
+- Allows automatic recovery
 
 ### Retry Pattern
-Implementado en Users API (Java/Spring Boot):
-- Reintenta automáticamente operaciones fallidas
-- Configurado para 3 intentos con 2 segundos entre cada intento
-- Maneja fallos temporales de red o base de datos
+Implemented in Users API (Java/Spring Boot):
+- Automatically retries failed operations
+- Configured for 3 attempts with 2 seconds between each attempt
+- Handles temporary network or database failures
 
-## Estrategia de Branching
+## Branching Strategy
 
-### Para Desarrolladores (Git Flow)
-- `main`: Código estable y listo para producción
-- `develop`: Código en estado estable para pruebas
-- `feature/*`: Desarrollo de nuevas funcionalidades
-- `release/*`: Preparación de versiones para producción
-- `hotfix/*`: Corrección de bugs críticos en producción
+### For Developers (Git Flow)
+- `main`: Stable code ready for production
+- `develop`: Stable code for testing
+- `feature/*`: New feature development
+- `release/*`: Production version preparation
+- `hotfix/*`: Critical bug fixes in production
 
-### Para Operaciones
-- `infra`: Rama principal para infraestructura como código
-- `infra/dev`: Pruebas y cambios preliminares de infraestructura
-- `infra/prod`: Rama protegida para despliegue en producción
+### For Operations
+- `infra`: Main branch for infrastructure as code
+- `infra/dev`: Infrastructure testing and preliminary changes
+- `infra/prod`: Protected branch for production deployment
 
 ## Pipelines
 
-### Pipelines de Desarrollo
-Cada microservicio tiene su propio pipeline que:
-1. Construye la aplicación
-2. Crea la imagen Docker
-3. Sube la imagen al registro
-4. Despliega en Kubernetes
+### Development Pipelines
+Each microservice has its own pipeline that:
+1. Builds the application
+2. Creates the Docker image
+3. Uploads the image to the registry
+4. Deploys to Kubernetes
 
-### Pipelines de Infraestructura
-1. **Pipeline de Inicio**:
-   - Despliega infraestructura base
-   - Configura namespace, redis, zipkin e ingress
-   - Escala servicios a 1 réplica
+### Infrastructure Pipelines
+1. **Start Pipeline**:
+   - Deploys base infrastructure
+   - Configures namespace, redis, zipkin, and ingress
+   - Scales services to 1 replica
 
-2. **Pipeline de Detención**:
-   - Escala todos los servicios a 0 réplicas
-   - Se ejecuta manualmente para limpieza
+2. **Stop Pipeline**:
+   - Scales all services to 0 replicas
+   - Manually executed for cleanup
 
-## Infraestructura
+## Infrastructure
 
 ### Kubernetes
 - Namespace: `microservices`
-- Servicios: ClusterIP para comunicación interna
-- Frontend: LoadBalancer para acceso externo
-- Recursos limitados por servicio
+- Services: ClusterIP for internal communication
+- Frontend: LoadBalancer for external access
+- Limited resources per service
 
-### Configuración de Servicios
-- Redis: Base de datos en memoria
-- Zipkin: Trazabilidad distribuida
-- Ingress: Manejo de tráfico externo
+### Service Configuration
+- Redis: In-memory database
+- Zipkin: Distributed tracing
+- Ingress: External traffic management
 
-## Guía de Uso
+## Usage Guide
 
-### Requisitos Previos
+### Prerequisites
 - Docker
 - Kubernetes
 - Azure CLI
 - Azure DevOps
 
-### Comandos Útiles
+### Useful Commands
 ```bash
-# Verificar estado de los servicios
+# Check service status
 kubectl get pods -n microservices
 
-# Ver logs de un servicio específico
-kubectl logs -n microservices [nombre-pod]
+# View logs for a specific service
+kubectl logs -n microservices [pod-name]
 
-# Escalar servicios manualmente
-kubectl scale deployment -n microservices [nombre-servicio] --replicas=[número]
+# Manually scale services
+kubectl scale deployment -n microservices [service-name] --replicas=[number]
 ```
 
-### Gestión de Infraestructura
-Para gestionar la infraestructura, utilizamos los pipelines de Azure DevOps:
+### Infrastructure Management
+To manage infrastructure, we use Azure DevOps pipelines:
 
-1. **Pipeline de Inicio** (`infra/azure-pipeline.yml`):
-   - Se ejecuta automáticamente al hacer push a master
-   - Despliega toda la infraestructura base
-   - Escala los servicios a 1 réplica
+1. **Start Pipeline** (`infra/azure-pipeline.yml`):
+   - Automatically runs on push to master
+   - Deploys all base infrastructure
+   - Scales services to 1 replica
 
-2. **Pipeline de Detención** (`infra/stop.yml`):
-   - Se ejecuta manualmente cuando se necesita detener los servicios
-   - Escala todos los servicios a 0 réplicas
+2. **Stop Pipeline** (`infra/stop.yml`):
+   - Manually executed when services need to be stopped
+   - Scales all services to 0 replicas
 
-### Acceso a Servicios
+### Service Access
 - Frontend: http://localhost:80
 - Zipkin: http://localhost:9411
 - APIs: http://localhost:8080/api/*
 
-### Monitoreo
-- Zipkin para trazabilidad
-- Logs de Kubernetes para debugging
-- Métricas de recursos por servicio
+### Monitoring
+- Zipkin for tracing
+- Kubernetes logs for debugging
+- Resource metrics per service
 
-## Mantenimiento
+## Maintenance
 
-### Escalado
-Para escalar servicios:
+### Scaling
+To scale services:
 ```bash
-kubectl scale deployment -n microservices [nombre-servicio] --replicas=[número]
+kubectl scale deployment -n microservices [service-name] --replicas=[number]
 ```
 
-### Actualización
-1. Hacer cambios en el código
-2. Crear Pull Request a develop
-3. Después de pruebas, merge a main
-4. Pipeline automático despliega cambios
+### Updates
+1. Make code changes
+2. Create Pull Request to develop
+3. After testing, merge to main
+4. Automatic pipeline deploys changes
 
 ### Troubleshooting
-1. Verificar logs de pods
-2. Revisar estado de servicios
-3. Comprobar conexiones entre servicios
-4. Verificar configuración de Kubernetes 
+1. Check pod logs
+2. Review service status
+3. Verify service connections
+4. Check Kubernetes configuration 

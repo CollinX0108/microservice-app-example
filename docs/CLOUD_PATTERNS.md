@@ -1,115 +1,153 @@
-# Patrones de Diseño Cloud Implementados
+# Cloud Design Patterns
 
-## 1. Circuit Breaker Pattern
+## Circuit Breaker
 
-### Implementación en Auth API (Go)
-El Circuit Breaker se implementa de forma nativa en Go usando mutexes para control de concurrencia.
+### Description
+The Circuit Breaker pattern is a design pattern used to handle failures in distributed systems. It acts like an electrical circuit breaker, protecting the system from cascading failures when a dependent service fails.
 
-```go
-// Crear una instancia del Circuit Breaker
-breaker := middleware.NewCircuitBreaker(
-    5,                     // failureThreshold
-    30 * time.Second,      // resetTimeout
-)
+### Implementation
+In our project, we have implemented the Circuit Breaker in two services:
 
-// Ejemplo de uso en un handler HTTP
-func authHandler(w http.ResponseWriter, r *http.Request) {
-    err := breaker.Execute(func() error {
-        // Tu lógica de autenticación aquí
-        return authenticateUser(r)
-    })
+1. **Auth API (Go)**:
+   - Uses the `github.com/sony/gobreaker` package
+   - Configuration:
+     ```go
+     settings := gobreaker.Settings{
+         Name:        "auth-service",
+         MaxRequests: 5,
+         Interval:    0,
+         Timeout:     5 * time.Second,
+         ReadyToTrip: func(counts gobreaker.Counts) bool {
+             return counts.ConsecutiveFailures > 3
+         },
+     }
+     ```
 
-    if err == middleware.ErrCircuitBreakerOpen {
-        http.Error(w, "Servicio temporalmente no disponible", http.StatusServiceUnavailable)
-        return
-    }
-    // Manejo normal de la respuesta...
-}
-```
+2. **TODOs API (Node.js)**:
+   - Uses the `circuit-breaker-js` library
+   - Configuration:
+     ```javascript
+     const circuitBreaker = new CircuitBreaker({
+         failureThreshold: 3,
+         resetTimeout: 5000,
+         monitorInterval: 1000
+     });
+     ```
 
-### Implementación en TODOs API (Node.js)
-Utilizamos la biblioteca Opossum para implementar el Circuit Breaker.
+### Benefits
+- Prevents cascading failures
+- Improves system resilience
+- Provides automatic recovery
+- Reduces load on failed services
 
-```javascript
-const createCircuitBreaker = require('./middleware/circuitBreaker');
+## Retry Pattern
 
-// Ejemplo de uso en una ruta Express
-app.get('/todos', async (req, res) => {
-    const breaker = createCircuitBreaker(async () => {
-        // Tu lógica de obtención de TODOs aquí
-        return await getTodosFromDatabase();
-    });
+### Description
+The Retry pattern handles temporary failures by automatically retrying failed operations. It is particularly useful for handling transient network issues or temporary database locks.
 
-    try {
-        const todos = await breaker.fire();
-        res.json(todos);
-    } catch (error) {
-        res.status(503).json({ error: 'Servicio temporalmente no disponible' });
-    }
-});
-```
+### Implementation
+In our project, we have implemented the Retry pattern in:
 
-## 2. Retry Pattern
+**Users API (Java/Spring Boot)**:
+- Uses Spring Retry
+- Configuration:
+  ```java
+  @Retryable(
+      value = {SQLException.class},
+      maxAttempts = 3,
+      backoff = @Backoff(delay = 2000)
+  )
+  public User createUser(User user) {
+      // User creation logic
+  }
+  ```
 
-### Implementación en Users API (Java/Spring Boot)
-Utilizamos Spring Retry para implementar el patrón de reintentos.
+### Benefits
+- Automatic handling of temporary failures
+- Improves system reliability
+- Reduces need for manual intervention
+- Flexible retry policy configuration
 
-```java
-// En tu servicio
-@Service
-public class UserService {
-    
-    @Autowired
-    private RetryTemplate retryTemplate;
+## Bulkhead Pattern
 
-    @Retryable(
-        value = { SQLException.class },
-        maxAttempts = 3,
-        backoff = @Backoff(delay = 2000)
-    )
-    public User getUser(Long id) {
-        // Tu lógica para obtener usuario
-        return userRepository.findById(id);
-    }
+### Description
+The Bulkhead pattern isolates elements of an application into groups so that if one fails, the others continue to function. It is similar to bulkheads in a ship that prevent the entire ship from flooding if there is a leak.
 
-    // Alternativa usando RetryTemplate
-    public User getUserWithRetry(Long id) {
-        return retryTemplate.execute(context -> {
-            return userRepository.findById(id);
-        });
-    }
-}
-```
+### Implementation
+In our project, we have implemented the Bulkhead pattern in:
 
-## Configuración y Uso
+**Log Message Processor (Python)**:
+- Uses batch processing pattern
+- Configuration:
+  ```python
+  class LogProcessor:
+      def __init__(self, batch_size=100, max_workers=5):
+          self.batch_size = batch_size
+          self.executor = ThreadPoolExecutor(max_workers=max_workers)
+  ```
 
-### Auth API (Go)
-1. El Circuit Breaker está implementado en `pkg/middleware/circuit_breaker.go`
-2. Parámetros configurables:
-   - `failureThreshold`: Número de fallos antes de abrir el circuito
-   - `resetTimeout`: Tiempo antes de intentar cerrar el circuito
+### Benefits
+- Failure isolation
+- Improved availability
+- Resource control
+- Enhanced scalability
 
-### Users API (Java)
-1. Configuración en `src/main/java/com/example/users/config/RetryConfig.java`
-2. Parámetros configurables:
-   - `maxAttempts`: Número máximo de intentos (default: 3)
-   - `backOffPeriod`: Tiempo entre reintentos (default: 2000ms)
+## CQRS (Command Query Responsibility Segregation)
 
-### TODOs API (Node.js)
-1. Circuit Breaker implementado en `src/middleware/circuitBreaker.js`
-2. Parámetros configurables:
-   - `timeout`: 3000ms
-   - `errorThresholdPercentage`: 50%
-   - `resetTimeout`: 30000ms
+### Description
+CQRS separates read and write operations into different models. This allows each model to be optimized for its specific purpose.
 
-## Beneficios de la Implementación
+### Implementation
+In our project, we have implemented CQRS in:
 
-1. **Circuit Breaker**:
-   - Previene fallos en cascada
-   - Permite degradación elegante del servicio
-   - Implementación específica para cada tecnología
+**TODOs API (Node.js)**:
+- Command and query separation
+- Optimized data models
+- Example:
+  ```javascript
+  // Command
+  async function createTodo(command) {
+      // Creation logic
+  }
 
-2. **Retry Pattern**:
-   - Manejo automático de fallos transitorios
-   - Configuración flexible de reintentos
-   - Integración nativa con Spring Boot 
+  // Query
+  async function getTodos(query) {
+      // Read logic
+  }
+  ```
+
+### Benefits
+- Better performance
+- Enhanced scalability
+- Design flexibility
+- Resource optimization
+
+## Event Sourcing
+
+### Description
+Event Sourcing stores all changes to an application's state as a sequence of events. This allows reconstructing the current state and maintaining a complete history of changes.
+
+### Implementation
+In our project, we have implemented Event Sourcing in:
+
+**Users API (Java/Spring Boot)**:
+- Uses Axon Framework
+- Configuration:
+  ```java
+  @Aggregate
+  public class UserAggregate {
+      @CommandHandler
+      public void handle(CreateUserCommand command) {
+          // Command handling logic
+      }
+  }
+  ```
+
+### Benefits
+- Complete change history
+- State reconstruction capability
+- Better traceability
+- Support for temporal analysis
+
+## Conclusion
+These cloud design patterns are fundamental for building resilient and scalable distributed systems. Their implementation in our project has significantly improved the reliability and performance of our microservices. 
