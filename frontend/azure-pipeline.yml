@@ -71,14 +71,6 @@ stages:
             arguments: 'pods -n microservices -l app=frontend -o wide'
 
         - task: Kubernetes@1
-          displayName: Get Service Status
-          inputs:
-            connectionType: 'Kubernetes Service Connection'
-            kubernetesServiceEndpoint: 'aks-microservices-connection'
-            command: 'get'
-            arguments: 'service frontend -n microservices'
-
-        - task: Kubernetes@1
           displayName: Get Pod Logs
           condition: succeededOrFailed()
           inputs:
