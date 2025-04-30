@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <h1>Vue está funcionando </h1>
+    <h1>Vue está funcionando 30 DE ABRIL</h1>
     <router-view></router-view>
   </div>
 </template>
