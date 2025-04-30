@@ -1,40 +1,100 @@
 # Guía de Configuración de Microservicios
 
-## 1. Servicios de Infraestructura
+## 1. Requisitos Previos
 
-### Zipkin (Trazabilidad)
+- Docker Desktop
+- Kubernetes (Minikube o similar)
+- kubectl
+- helm
+
+## 2. Configuración del Entorno
+
+### 2.1. Configuración de Kubernetes
+
 ```bash
-docker run -d -p 9411:9411 --name zipkin openzipkin/zipkin
+# Iniciar Minikube
+minikube start
 ```
-Accesible en: http://localhost:9411
 
-### Redis (Mensajería)
+### 2.2. Despliegue de Servicios de Infraestructura
+
 ```bash
-docker run -d --name redis -p 6379:6379 redis:alpine
+# Desplegar Zipkin (Trazabilidad)
+kubectl apply -f k8s/zipkin.yaml
+
+# Desplegar Redis (Mensajería)
+kubectl apply -f k8s/redis.yaml
 ```
 
-## 2. Servicios de la Aplicación
+## 3. Despliegue de Microservicios
+
+### 3.1. Construcción de Imágenes
+
+```bash
+# Construir imágenes Docker
+docker build -t users-api ./users-api
+docker build -t auth-api ./auth-api
+docker build -t todos-api ./todos-api
+docker build -t log-processor ./log-message-processor
+docker build -t frontend ./frontend
+```
+
+### 3.2. Despliegue en Kubernetes
+
+```bash
+# Aplicar configuraciones de Kubernetes
+kubectl apply -f k8s/users-api.yaml
+kubectl apply -f k8s/auth-api.yaml
+kubectl apply -f k8s/todos-api.yaml
+kubectl apply -f k8s/log-processor.yaml
+kubectl apply -f k8s/frontend.yaml
+```
+
+## 4. Acceso a los Servicios
+
+Una vez desplegado, los servicios estarán disponibles en:
+
+- Frontend: http://localhost:8080
+- Zipkin UI: http://localhost:9411
+- Grafana: http://localhost:3000
+
+## 5. Verificación
+
+Para verificar que todo está funcionando:
+
+1. Verificar pods:
+```bash
+kubectl get pods
+```
+
+2. Verificar servicios:
+```bash
+kubectl get services
+```
+
+3. Verificar logs:
+```bash
+kubectl logs -f deployment/log-processor
+```
+
+## 6. Desarrollo Local
+
+Para desarrollo local, puedes ejecutar los servicios individualmente:
 
 ### Log Message Processor (Python)
 ```bash
 cd log-message-processor
-# Instalar dependencias
 pip install -r requirements.txt
-
-# Variables de entorno necesarias
 export REDIS_HOST=localhost
 export REDIS_PORT=6379
 export REDIS_CHANNEL=log_channel
 export ZIPKIN_URL=http://localhost:9411/api/v2/spans
-
-# Ejecutar el servicio
 chmod +x run.sh && ./run.sh
 ```
 
 ### Users API (Java/Spring Boot)
 ```bash
 cd users-api
-# Compilar y ejecutar
 mvn clean install
 JWT_SECRET=PRFT SERVER_PORT=8083 java -jar target/users-api-0.0.1-SNAPSHOT.jar
 ```
@@ -42,45 +102,29 @@ JWT_SECRET=PRFT SERVER_PORT=8083 java -jar target/users-api-0.0.1-SNAPSHOT.jar
 ### Auth API (Go)
 ```bash
 cd auth-api
-# Instalar dependencias y ejecutar
- go mod tidy
- go build
- JWT_SECRET=PRFT AUTH_API_PORT=8000 USERS_API_ADDRESS=http://127.0.0.1:8083 ./auth-api
+go mod tidy
+go build
+JWT_SECRET=PRFT AUTH_API_PORT=8000 USERS_API_ADDRESS=http://127.0.0.1:8083 ./auth-api
 ```
 
 ### Todos API (Node.js)
 ```bash
 cd todos-api
-# Instalar dependencias
 npm install
-# Ejecutar el servicio
 JWT_SECRET=PRFT TODO_API_PORT=8082 npm start
 ```
 
-## 3. Frontend (Vue.js)
+### Frontend (Vue.js)
 ```bash
 cd frontend
-# Instalar dependencias
 npm install --legacy-peer-deps
-# Ejecutar en modo desarrollo
 npm run dev
 ```
 
-## Notas Importantes:
-1. Asegurarse de que Docker Desktop esté corriendo antes de iniciar los contenedores
-2. Los servicios deben iniciarse en el orden listado arriba
-3. Cada servicio debe ejecutarse en una terminal separada
-4. Verificar que los puertos necesarios estén disponibles:
-   - Zipkin: 9411
-   - Redis: 6379
-   - Users API: 8083
-   - Auth API: 8081
-   - Todos API: 8082
-   - Frontend: 8080
+## Notas Importantes
 
-## Verificación
-Para verificar que todo está funcionando:
-1. Zipkin UI: http://localhost:9411
-2. Redis: `docker ps | findstr redis`
-3. Los logs deberían aparecer en el log-message-processor
-4. Cada servicio debería mostrar mensajes de inicio exitoso en su respectiva terminal 
+1. Asegúrate de que todos los requisitos previos estén instalados
+2. Los servicios deben iniciarse en el orden correcto
+3. Verifica que los puertos necesarios estén disponibles
+4. Para desarrollo local, asegúrate de que Redis y Zipkin estén ejecutándose
+5. Para producción, utiliza las configuraciones de Kubernetes 
